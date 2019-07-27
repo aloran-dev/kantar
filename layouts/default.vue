@@ -11,7 +11,7 @@
         dark
         extended
         flat
-        extensionHeight="100"
+        extensionHeight="150"
       >
       </v-toolbar>
 
@@ -19,7 +19,7 @@
       <v-card
         class="mx-auto"
         max-width="1200"
-        style="margin-top: -64px;"
+        style="margin-top: -125px;"
       >
         <nuxt />
       </v-card>
