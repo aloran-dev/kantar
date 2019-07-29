@@ -1,5 +1,7 @@
 <template>
   <v-container fluid>
+
+    <!-- data table head -->
     <v-toolbar
       flat
       color="white"
@@ -9,112 +11,29 @@
       <v-spacer></v-spacer>
       <v-text-field
         v-model="search"
-        append-icon="search"
+        prepend-inner-icon="search"
         label="Search"
         single-line
+        clearable
       ></v-text-field>
-      <v-spacer></v-spacer>
-      <v-dialog
-        v-model="dialog"
-        max-width="500px"
-      >
-        <template v-slot:activator="{ on }">
-          <v-btn
-            color="primary"
-            dark
-            class="mb-2"
-            v-on="on"
-          >Actualizar reporte</v-btn>
-        </template>
-
-        <v-card>
-          <v-card-title>
-            <span class="headline">{{ formTitle }}</span>
-          </v-card-title>
-
-          <v-card-text>
-            <v-container grid-list-md>
-              <v-form
-                ref="form"
-                v-model="valid"
-                lazy-validation
-              >
-                <v-layout wrap>
-                  <v-flex xs12>
-                    <v-text-field
-                      v-model="editedItem.employee_name"
-                      label="Nombre"
-                      :rules="[
-                        v => !!v || 'Este campo es requerido',
-                        v => (/^[a-zA-Z]+$/.test(v)) || 'Tu nombre no debe contener numeros ni espacios',
-                        v => (v && v.length <= 20) || 'Tu nombre no debe contener más de 20 caracteres',
-                        v => (v && v.length >= 8) || 'Tu nombre debe contener más de 8 caracteres',
-                      ]"
-                      :counter="20"
-                      required
-                    ></v-text-field>
-                  </v-flex>
-                  <v-flex xs6>
-                    <v-text-field
-                      v-model="editedItem.employee_salary"
-                      :rules="[
-                        v => !!v || 'Este campo es requerido',
-                        v => (/^[0-9]+([.][0-9]+)?/.test(v)) || 'Por favor ingresa solo numeros sin espacios',
-                        v => (v && v <= 20000) || 'Tu salario no debe ser mayor a 20000',
-                        v => (v && v >= 8000) || 'Tu salario debe ser mayor a 8000',
-                      ]"
-                      label="Salario"
-                    ></v-text-field>
-                  </v-flex>
-                  <v-flex xs6>
-                    <v-text-field
-                      v-model="editedItem.employee_age"
-                      :rules="[
-                        v => !!v || 'Este campo es requerido',
-                        v => (/^[0-9]+$/.test(v)) || 'Por favor ingresa solo numeros sin espacios',
-                        v => (v && v <= 35) || 'Tu edad no puede ser mayor a 35',
-                        v => (v && v >= 18) || 'Debes tener más de 18 años para continuar',
-                      ]"
-                      label="Edad"
-                    ></v-text-field>
-                  </v-flex>
-                </v-layout>
-              </v-form>
-            </v-container>
-          </v-card-text>
-
-          <v-card-actions>
-            <v-spacer></v-spacer>
-            <v-btn
-              color="blue darken-1"
-              flat
-              @click="close"
-            >Cancelar</v-btn>
-            <v-btn
-              color="blue darken-1 white--text"
-              @click="save"
-              :disabled="!valid"
-            >Guardar</v-btn>
-          </v-card-actions>
-        </v-card>
-
-      </v-dialog>
     </v-toolbar>
 
+    <!-- data table -->
     <v-data-table
       :headers="headers"
       :items="estudios"
       :search="search"
+      :loading="loading"
+      loading-text="Cargando datos... espere un momento"
+      :items-per-page="-1"
       flat
     >
       <template v-slot:items="props">
         <td>{{ props.item.nombre }}</td>
         <td>{{ props.item.fecha_ini }}</td>
-
         <td>
-
           <v-menu
-            v-model="menu2"
+            v-model="menu"
             :close-on-content-click="true"
             :nudge-right="40"
             transition="scale-transition"
@@ -131,12 +50,11 @@
             </template>
             <v-date-picker
               v-model="props.item.fecha_fin"
-              @input="menu2 = false"
+              @input="menu = false"
+              @click:date="open()"
             ></v-date-picker>
           </v-menu>
-
         </td>
-
         <td>{{ props.item.efectivas }}</td>
         <td>{{ props.item.canceladas }}</td>
         <td>{{ props.item.completadas }}</td>
@@ -148,20 +66,19 @@
             small
             class="mr-2"
             @click="editItem(props.item)"
-          >
-            edit
+          > edit
           </v-icon>
           <v-icon
             small
             class="mr-2"
             @click="editItem(props.item)"
-          >
-            cloud_download
+          > cloud_download
           </v-icon>
         </td>
       </template>
     </v-data-table>
 
+    <!-- snackbar -->
     <v-snackbar
       v-model="snack"
       :timeout="3000"
@@ -181,13 +98,14 @@
 
 <script>
   import axios from 'axios'
+
   export default {
-    async asyncData () {
-      const { data } = await axios.get('http://172.30.27.40:8080/sialcom/system/reportes/kantar_dev/api/estudios/all.php')
+
+    data () {
       return {
-        dialog: false,
-        valid: false,
         search: '',
+        loading: true,
+
         // cabecera de tabla
         headers: [
           { text: 'Nombre del proyecto', value: 'nombre' },
@@ -199,9 +117,11 @@
           { text: 'Audios', value: 'audio' },
           { text: 'Acciones', value: 'name', sortable: false }
         ],
-        estudios: data,
+
         // datos de empleado
-        editedIndex: -1,
+        estudios: [],
+
+        // modal data
         editedItem: {
           'id': '',
           'Nombre del proyecto': '',
@@ -227,17 +147,15 @@
         snackText: '',
       }
     },
-    computed: {
-      // dependiendo de si existe el empleado en la lista se elige el titulo del modal
-      formTitle () {
-        return this.editedIndex === -1 ? 'Agregar nuevo empleado' : 'Editar empleado'
-      }
+
+    mounted () {
+      axios.get('http://172.30.27.40:8080/sialcom/system/reportes/kantar_dev/api/estudios/all.php')
+        .then(res => {
+          this.estudios = res.data
+          this.loading = false;
+        })
     },
-    watch: {
-      dialog (val) {
-        val || this.close()
-      }
-    },
+
     methods: {
       save () {
         this.snack = true
