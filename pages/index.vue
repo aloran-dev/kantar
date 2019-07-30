@@ -51,7 +51,7 @@
             <v-date-picker
               v-model="props.item.fecha_fin"
               @input="menu = false"
-              @click:date="open()"
+              @click:date="updateItem(props.item)"
             ></v-date-picker>
           </v-menu>
         </td>
@@ -59,9 +59,6 @@
         <td>{{ props.item.canceladas }}</td>
         <td>{{ props.item.completadas }}</td>
         <td>
-          <v-icon>check</v-icon>
-        </td>
-        <td class="justify-center layout px-0">
           <v-icon
             small
             class="mr-2"
@@ -71,7 +68,7 @@
           <v-icon
             small
             class="mr-2"
-            @click="editItem(props.item)"
+            @click="downloadItem(props.item)"
           > cloud_download
           </v-icon>
         </td>
@@ -80,18 +77,57 @@
 
     <!-- snackbar -->
     <v-snackbar
-      v-model="snack"
+      v-model="snack.status"
+      :color="snack.color"
       :timeout="3000"
-      :color="snackColor"
+      top
     >
-      {{ snackText }}
+      {{ snack.text }}
       <v-btn
         text
         flat
         dark
-        @click="snack = false"
+        @click="snack.status = false"
       >Close</v-btn>
     </v-snackbar>
+
+    <!-- dialog -->
+    <v-dialog
+      v-model="dialog.status"
+      width="500"
+    >
+      <v-card>
+        <v-card-title
+          class="headline grey lighten-2"
+          primary-title
+        >
+          Editar parametros
+        </v-card-title>
+
+        <v-card-text>
+          Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+        </v-card-text>
+
+        <v-divider></v-divider>
+
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn
+            color="primary"
+            flat
+            @click="dialog.status = false"
+          >
+            Cancelar
+          </v-btn>
+          <v-btn
+            color="primary"
+            @click="dialog.status = false"
+          >
+            Guardar
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
 
   </v-container>
 </template>
@@ -114,41 +150,43 @@
           { text: 'Efectivas', value: 'efectivas' },
           { text: 'Canceladas', value: 'canceladas' },
           { text: 'Completadas', value: 'completadas' },
-          { text: 'Audios', value: 'audio' },
           { text: 'Acciones', value: 'name', sortable: false }
         ],
 
         // datos de empleado
         estudios: [],
 
-        // modal data
+        // datos de edicion
+        editedIndex: -1,
         editedItem: {
-          'id': '',
-          'Nombre del proyecto': '',
-          'Fecha de inicio': '',
-          'Fecha de fin': '',
-          'Efectivas': '',
-          'Canceladas': '',
-          'Completadas': '',
-        },
-        defaultItem: {
-          'id': '',
-          'Nombre del proyecto': '',
-          'Fecha de inicio': '',
-          'Fecha de fin': '',
-          'Efectivas': '',
-          'Canceladas': '',
-          'Completadas': ''
+          id: '',
+          conexion: '',
+          base: '',
+          condicion_extra: '',
+          nombre: '',
+          fecha_ini: '',
+          fecha_fin: '',
+          efectivas: 0,
+          canceladas: 0,
+          completadas: 0
         },
 
         // snackbar
-        snack: false,
-        snackColor: '',
-        snackText: '',
+        snack: {
+          status: false,
+          colorolor: '',
+          text: ''
+        },
+
+        // dialog
+        dialog: {
+          status: false,
+        }
       }
     },
 
     mounted () {
+      // TODO: falta agregar manejo de errores
       axios.get('http://172.30.27.40:8080/sialcom/system/reportes/kantar_dev/api/estudios/all.php')
         .then(res => {
           this.estudios = res.data
@@ -157,21 +195,51 @@
     },
 
     methods: {
-      save () {
-        this.snack = true
-        this.snackColor = 'success'
-        this.snackText = 'Data saved'
+      // TODO: falta agregar manejo de errores
+      updateItem (item) {
+        // inicia loader
+        this.loading = true;
+
+        // asigna el estudio que se quiere editar a un objeto
+        this.editedIndex = this.estudios.indexOf(item)
+        this.editedItem = Object.assign({}, item)
+
+        // manda post a endpoint
+        axios.post('http://172.30.27.40:8080/sialcom/system/reportes/kantar_dev/api/conteo/general.php', {
+          "base": this.editedItem.base,
+          "fecha_ini": this.editedItem.fecha_ini,
+          "fecha_fin": this.editedItem.fecha_fin,
+          "condicion_extra": this.editedItem.condicion_extra
+        })
+          .then(res => {
+            this.editedItem.efectivas = res.data.efectivas || 0
+            this.editedItem.canceladas = res.data.canceladas || 0
+            this.editedItem.completadas = res.data.completadas || 0
+
+            this.estudios.splice(this.editedIndex, 1, this.editedItem)
+
+            this.loading = false
+
+            this.snack.text = 'Conteo de proyecto actualizado'
+            this.snack.color = 'info'
+            this.snack.status = true
+          })
+
       },
-      cancel () {
-        this.snack = true
-        this.snackColor = 'error'
-        this.snackText = 'Canceled'
+
+      editItem (item) {
+        this.dialog.status = true
+
+        this.snack.text = 'Editar item'
+        this.snack.color = 'info'
+        this.snack.status = true
       },
-      open () {
-        this.snack = true
-        this.snackColor = 'info'
-        this.snackText = 'Dialog opened'
-      },
+
+      downloadItem (item) {
+        this.snack.text = 'Descargar Item'
+        this.snack.color = 'info'
+        this.snack.status = true
+      }
     }
   }
 </script>

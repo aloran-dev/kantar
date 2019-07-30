@@ -1,5 +1,5 @@
 <template>
-  <v-app>
+  <v-app style="background: #eee;">
     <v-card
       flat
       color="transparent"
@@ -17,7 +17,7 @@
 
       <!-- card -->
       <v-card
-        class="mx-auto"
+        class="mx-auto elevation-3"
         max-width="1200"
         style="margin-top: -125px;"
       >
