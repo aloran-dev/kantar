@@ -12,7 +12,7 @@
       <v-text-field
         v-model="search"
         prepend-inner-icon="search"
-        label="Search"
+        label="Buscar"
         single-line
         clearable
       ></v-text-field>
@@ -24,8 +24,10 @@
       :items="estudios"
       :search="search"
       :loading="loading"
-      loading-text="Cargando datos... espere un momento"
+      loading-text="Cargando datos, espere un momento..."
+      :rows-per-page-items="rowOptions"
       :items-per-page="-1"
+      disable-items-per-page
       flat
     >
       <template v-slot:items="props">
@@ -105,7 +107,14 @@
         </v-card-title>
 
         <v-card-text>
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+
+          <v-textarea
+            label="Parametros"
+            v-model="editedItem.condicion_extra"
+            auto-grow
+            box
+          ></v-textarea>
+
         </v-card-text>
 
         <v-divider></v-divider>
@@ -115,13 +124,13 @@
           <v-btn
             color="primary"
             flat
-            @click="dialog.status = false"
+            @click="dialogClose()"
           >
             Cancelar
           </v-btn>
           <v-btn
             color="primary"
-            @click="dialog.status = false"
+            @click="dialogSave()"
           >
             Guardar
           </v-btn>
@@ -141,6 +150,13 @@
       return {
         search: '',
         loading: true,
+
+        rowOptions: [
+          5,
+          15,
+          25,
+          { text: "Todas", value: -1 }
+        ],
 
         // cabecera de tabla
         headers: [
@@ -180,7 +196,7 @@
 
         // dialog
         dialog: {
-          status: false,
+          status: false
         }
       }
     },
@@ -194,17 +210,9 @@
         })
     },
 
+    // TODO: falta agregar manejo de errores
     methods: {
-      // TODO: falta agregar manejo de errores
-      updateItem (item) {
-        // inicia loader
-        this.loading = true;
-
-        // asigna el estudio que se quiere editar a un objeto
-        this.editedIndex = this.estudios.indexOf(item)
-        this.editedItem = Object.assign({}, item)
-
-        // manda post a endpoint
+      conteo () {
         axios.post('http://172.30.27.40:8080/sialcom/system/reportes/kantar_dev/api/conteo/general.php', {
           "base": this.editedItem.base,
           "fecha_ini": this.editedItem.fecha_ini,
@@ -224,21 +232,40 @@
             this.snack.color = 'info'
             this.snack.status = true
           })
+      },
 
+      // Se ejecuta cuando se cambia la fecha
+      updateItem (item) {
+        // inicia loader
+        this.loading = true;
+
+        // asigna el estudio que se quiere editar a un objeto
+        this.editedIndex = this.estudios.indexOf(item)
+        this.editedItem = Object.assign({}, item)
+
+        this.conteo()
       },
 
       editItem (item) {
+        this.editedIndex = this.estudios.indexOf(item)
+        this.editedItem = Object.assign({}, item)
         this.dialog.status = true
-
-        this.snack.text = 'Editar item'
-        this.snack.color = 'info'
-        this.snack.status = true
       },
 
       downloadItem (item) {
         this.snack.text = 'Descargar Item'
         this.snack.color = 'info'
         this.snack.status = true
+      },
+
+      dialogSave () {
+        this.conteo()
+        this.dialogClose()
+      },
+
+      dialogClose () {
+        this.dialog.parametro = ''
+        this.dialog.status = false
       }
     }
   }
