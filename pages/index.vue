@@ -7,7 +7,11 @@
       class="px-2 py-3"
     >
       <v-toolbar-title>
-        <h1 class="header">KANTAR</h1>
+        <img
+          src="/img/kantar_logo-dark.png"
+          alt="Kantar logo"
+          class="logo"
+        >
         <h2 class="subheading">Gestión de avance de proyectos</h2>
       </v-toolbar-title>
     </v-toolbar>
@@ -21,7 +25,6 @@
         <v-form
           ref="form"
           v-model="valid"
-          lazy-validation
         >
           <v-text-field
             v-model="user"
@@ -33,10 +36,12 @@
 
           <v-text-field
             v-model="pass"
+            :append-icon="show1 ? 'visibility' : 'visibility_off'"
+            :type="show1 ? 'text' : 'password'"
             :rules="passRules"
-            :type="'password'"
             label="Contraseña"
             prepend-icon="lock"
+            @click:append="show1 = !show1"
             required
           ></v-text-field>
 
@@ -82,6 +87,7 @@
     data: () => ({
       valid: true,
       loading: false,
+      show1: false,
 
       // rules and input
       user: '',
@@ -145,3 +151,10 @@
     }
   }
 </script>
+
+<style lang="scss">
+.logo {
+  height: 30px;
+  object-fit: contain;
+}
+</style>
