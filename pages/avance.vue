@@ -43,7 +43,33 @@
 
       <template v-slot:items="props">
         <td>{{ props.item.carpeta.replace(/^[0-9]+\s/, '') }}</td>
-        <td>{{ props.item.fecha_ini }}</td>
+        
+        <td>
+          <v-menu
+            v-model="menu"
+            :close-on-content-click="true"
+            :nudge-right="40"
+            transition="scale-transition"
+            offset-y
+          >
+            <template v-slot:activator="{ on }">
+              <v-text-field
+                class="caption"
+                v-model="props.item.fecha_ini"
+                prepend-icon="event"
+                style="width: 120px;"
+                readonly
+                v-on="on"
+              ></v-text-field>
+            </template>
+            <v-date-picker
+              v-model="props.item.fecha_ini"
+              @input="menu = false"
+              @click:date="updateItem(props.item)"
+            ></v-date-picker>
+          </v-menu>
+        </td>
+
         <td>
           <v-menu
             v-model="menu"

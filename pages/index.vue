@@ -1,31 +1,15 @@
 <template>
   <div style="width: 400px;">
-    <v-toolbar
-      color="primary"
-      dark
-      flat
-      class="px-2 py-3"
-    >
+    <v-toolbar color="primary" dark flat class="px-2 py-3">
       <v-toolbar-title>
-        <img
-          src="/img/kantar_logo-dark.png"
-          alt="Kantar logo"
-          class="logo"
-        >
+        <img src="/img/kantar_logo-dark.png" alt="Kantar logo" class="logo" />
         <h2 class="subheading">Gestión de avance de proyectos</h2>
       </v-toolbar-title>
     </v-toolbar>
 
-    <v-card
-      class="px-3 py-3"
-      elevation="5"
-      style="width: 100%"
-    >
+    <v-card class="px-3 py-3" elevation="5" style="width: 100%">
       <v-card-text class="py-0">
-        <v-form
-          ref="form"
-          v-model="valid"
-        >
+        <v-form ref="form" v-model="valid" @submit.prevent="validate">
           <v-text-field
             v-model="user"
             :rules="userRules"
@@ -51,7 +35,7 @@
               :disabled="!valid"
               :loading="loading"
               color="primary"
-              @click="validate"
+              type="submit"
             >
               Iniciar sesión
             </v-btn>
@@ -61,95 +45,75 @@
     </v-card>
 
     <!-- snackbar -->
-    <v-snackbar
-      v-model="snack.status"
-      :color="snack.color"
-      :timeout="3000"
-      top
-    >
+    <v-snackbar v-model="snack.status" :color="snack.color" :timeout="3000" top>
       {{ snack.text }}
-      <v-btn
-        text
-        flat
-        dark
-        @click="snack.status = false"
-      >Close</v-btn>
+      <v-btn text flat dark @click="snack.status = false">Close</v-btn>
     </v-snackbar>
   </div>
 </template>
 
 <script>
-  import axios from 'axios'
+import axios from 'axios';
 
-  export default {
-    layout: 'login',
+export default {
+  layout: 'login',
 
-    data: () => ({
-      valid: true,
-      loading: false,
-      show1: false,
+  data: () => ({
+    valid: true,
+    loading: false,
+    show1: false,
 
-      // rules and input
-      user: '',
-      userRules: [
-        v => !!v || 'El nombre de usuario es requerido'
-      ],
-      pass: '',
-      passRules: [
-        v => !!v || 'La contraseña es requerida'
-      ],
+    // rules and input
+    user: '',
+    userRules: [v => !!v || 'El nombre de usuario es requerido'],
+    pass: '',
+    passRules: [v => !!v || 'La contraseña es requerida'],
 
-      // snackbar
-      snack: {
-        status: false,
-        color: '',
-        text: ''
-      },
-    }),
-
-    beforeMount () {
-      if (localStorage.getItem('key')) this.$router.push('/avance')
+    // snackbar
+    snack: {
+      status: false,
+      color: '',
+      text: '',
     },
+  }),
 
-    methods: {
-      validate () {
-        if (this.$refs.form.validate()) {
-          this.loading = true
-          this.valid = false
+  beforeMount() {
+    if (localStorage.getItem('key')) this.$router.push('/avance');
+  },
 
-          axios.post('http://172.30.27.40:8080/sialcom/system/reportes/kantar_dev/api/consultausuarios/revisar_usuarios.php', {
-            "usuario_name": this.user,
-            "pass_name": this.pass
-          })
-            .then(res => {
-              console.log(res.data)
-              this.loading = false
+  methods: {
+    validate() {
+      if (this.$refs.form.validate()) {
+        this.loading = true;
+        this.valid = false;
 
-              if (res.data.msg === 'ok') {
-                localStorage.setItem('key', res.data.key)
-                this.$router.push('/avance')
-              } else {
-                this.snack.text = "Error al inciar sesión, por favor comprueba tus datos"
-                this.snack.color = "Error"
-                this.snack.status = true
-                this.$refs.form.reset()
-              }
-            })
-        }
-      },
-
-      sesion () {
-        axios.post('http://172.30.27.40:8080/sialcom/system/reportes/kantar_dev/api/consultausuarios/verificar_sesion.php', {}, {
-          headers: {
-            "Access-Control-Allow-Origin": "*"
-          }
-        })
+        axios
+          .post(
+            'http://172.30.27.40:8080/sialcom/system/reportes/kantar_dev/api/consultausuarios/revisar_usuarios.php',
+            {
+              usuario_name: this.user,
+              pass_name: this.pass,
+            },
+          )
           .then(res => {
-            console.log(res.data)
-          })
+            console.log(res.data);
+            this.loading = false;
+
+            if (res.data.msg === 'ok') {
+              localStorage.setItem('key', res.data.key);
+              this.$router.push('/avance');
+            } else {
+              this.snack.text =
+                'Error al inciar sesión, por favor comprueba tus datos';
+              this.snack.color = 'Error';
+              this.snack.status = true;
+              this.$refs.form.reset();
+            }
+          });
       }
-    }
-  }
+    },
+  },
+};
 </script>
 
 <style lang="scss">
