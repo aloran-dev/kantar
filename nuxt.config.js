@@ -3,11 +3,6 @@ import colors from 'vuetify/es5/util/colors'
 export default {
   mode: 'universal',
 
-  server: {
-    port: 80,
-    // host: '0.0.0.0'
-  },
-
   // Atributos del html
   htmlAttrs: {
     lang: 'es',
