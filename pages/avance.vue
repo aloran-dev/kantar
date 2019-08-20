@@ -43,7 +43,7 @@
 
       <template v-slot:items="props">
         <td>{{ props.item.carpeta.replace(/^[0-9]+\s/, '') }}</td>
-        
+
         <td>
           <v-menu
             v-model="menu"
@@ -178,6 +178,26 @@
       </v-card>
     </v-dialog>
 
+    <v-dialog
+      v-model="loadDialog"
+      persistent
+      width="400"
+    >
+      <v-card
+        color="primary"
+        dark
+      >
+        <v-card-text>
+          Por favor espere, su archivo esta siendo generando.
+          <v-progress-linear
+            indeterminate
+            color="white"
+            class="mb-0"
+          ></v-progress-linear>
+        </v-card-text>
+      </v-card>
+    </v-dialog>
+
   </v-container>
 </template>
 
@@ -190,6 +210,7 @@
       return {
         search: '',
         loading: true,
+        loadDialog: false,
 
         rowOptions: [
           5,
@@ -252,6 +273,7 @@
       // TODO: falta agregar manejo de errores
       axios.get('http://172.30.27.40:8080/sialcom/system/reportes/kantar_dev/api/estudios/all.php')
         .then(res => {
+          console.log(res.data)
           this.estudios = res.data
           this.loading = false;
         })
@@ -295,6 +317,7 @@
 
       downloadItem (item) {
         // asigna el estudio que se quiere editar a un objeto
+        this.loadDialog = true
         this.editedIndex = this.estudios.indexOf(item)
         this.editedItem = Object.assign({}, item)
         this.editedItem.generar_base = (item.generar_base === true) ? true : false;
@@ -306,6 +329,7 @@
           "fecha_fin": this.editedItem.fecha_fin,
         })
           .then(res => {
+            this.loadDialog = false
             this.snack.text = 'Archivos generados con exito'
             this.snack.color = 'info'
             this.snack.status = true
