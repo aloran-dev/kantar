@@ -333,6 +333,10 @@
             this.snack.text = 'Archivos generados con exito'
             this.snack.color = 'info'
             this.snack.status = true
+            console.log(res.data)
+            let file = window.open(res.data, '_blank')
+            window.focus()
+            setTimeout(() => file.close(), 1000)
           })
       }
     }
