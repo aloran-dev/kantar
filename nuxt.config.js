@@ -50,6 +50,8 @@ export default {
 
   // configuracion de axios
   axios: {
+    // baseURL: "http://172.30.27.40:8080/sialcom/system/reportes/kantar_dev/api/"
+    baseURL: "http://187.189.235.12:8080/sialcom/system/reportes/kantar_dev/api/"
   },
 
   // configuración de vuetify

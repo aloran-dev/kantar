@@ -271,7 +271,7 @@
 
     mounted () {
       // TODO: falta agregar manejo de errores
-      axios.get('http://172.30.27.40:8080/sialcom/system/reportes/kantar_dev/api/estudios/all.php')
+      axios.get(`${this.$axios.defaults.baseURL}estudios/all.php`)
         .then(res => {
           console.log(res.data)
           this.estudios = res.data
@@ -294,7 +294,7 @@
       },
 
       conteo () {
-        axios.post('http://172.30.27.40:8080/sialcom/system/reportes/kantar_dev/api/conteo/general.php', {
+        axios.post(`${this.$axios.defaults.baseURL}conteo/general.php`, {
           "base": this.editedItem.base,
           "fecha_ini": this.editedItem.fecha_ini,
           "fecha_fin": this.editedItem.fecha_fin,
@@ -322,7 +322,7 @@
         this.editedItem = Object.assign({}, item)
         this.editedItem.generar_base = (item.generar_base === true) ? true : false;
 
-        axios.post('http://172.30.27.40:8080/sialcom/system/reportes/kantar_dev/api/generar/csv.php', {
+        axios.post(`${this.$axios.defaults.baseURL}generar/csv.php`, {
           "id": this.editedItem.id,
           "generar_base": this.editedItem.generar_base,
           "fecha_ini": this.editedItem.fecha_ini,
